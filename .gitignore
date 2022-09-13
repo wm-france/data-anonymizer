@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+
+# Testing
+.pytest_cache/
+
+# Databases
+*.sqlite3
+*.sqlite3-journal
+*.db
+
+# Jupyter
+.ipynb_checkpoints
+
+# Virtual environment
+env
+
+# VS Code
+.vscode

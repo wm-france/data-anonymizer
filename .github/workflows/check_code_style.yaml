@@ -1,0 +1,35 @@
+name: Check code style
+
+on: [push]
+
+jobs:
+  check-line-endings:
+    name: Line endings
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository contents
+        uses: actions/checkout@v2
+
+      - name: Check line endings
+        uses: AODocs/check-eol@main
+
+  check-python-code-style:
+    name: Python code style
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository contents
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: pip install black flake8
+
+      - name: Check flake8 compliance
+        run: flake8
+
+      - name: Check Black compliance
+        run: black --check .
