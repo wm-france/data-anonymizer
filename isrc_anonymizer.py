@@ -1,5 +1,6 @@
 import pandas as pd
 from cryptography.fernet import Fernet
+from os.path import exists
 
 pd.options.mode.chained_assignment = None
 
@@ -7,19 +8,22 @@ pd.options.mode.chained_assignment = None
 table_path = input("Input full file path and press Enter: \n> ")
 # Retrieve folder path to place resulting file in same folder
 folder_path = table_path.rpartition("/")[0]
-
 # Load data from csv or excel to dataframe whether
-if table_path.split(".")[1] == "xls" or table_path.split(".")[1] == "xlsx":
-    table_to_encrypt = pd.read_excel(table_path, header=0)
-elif table_path.split(".")[1] == "csv":
-    table_to_encrypt = pd.read_csv(table_path)
+if exists(table_path):
+    if table_path.split(".")[1] == "xls" or table_path.split(".")[1] == "xlsx":
+        table_to_encrypt = pd.read_excel(table_path, header=0)
+    elif table_path.split(".")[1] == "csv":
+        table_to_encrypt = pd.read_csv(table_path)
+    else:
+        raise ValueError(
+            "File type incorrect. File needs to be of type csv, xls or xlsx."
+        )
 else:
-    raise ValueError(
-        "File type incorrect. File needs to be of type csv, xls or xlsx."
-    )
+    raise ValueError("File does not exist.")
+
 
 # Returns list of columns that contain ISRCs,
-# and the first row where an IRSC was located in those columns
+# and the first row where an ISRC was located in those columns
 
 
 def isrc_column_identification(df_subject):
@@ -43,6 +47,9 @@ def isrc_column_identification(df_subject):
                 isrc_columns.append(col)
                 isrc_first_row.append(row)
                 break
+    if len(isrc_columns) == 0:
+        print("File contains zero ISRC columns.")
+        exit()
     return [isrc_columns, isrc_first_row]
 
 

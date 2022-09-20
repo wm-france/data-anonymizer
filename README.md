@@ -1,6 +1,6 @@
 # ISRC Anonymizer
 
-Detects and encrypts IRSC columns in csv or excel files and generates the resulting table in csv
+Detects and encrypts ISRC columns in csv or excel files and generates the resulting table in csv
 
 ## Installation
 
