@@ -41,4 +41,4 @@ pip install -r requirements.txt
 ```
 
 ### How to use:
-* Run 'isrc_anonymizer.py'
+* Run `isrc_anonymizer.py`
