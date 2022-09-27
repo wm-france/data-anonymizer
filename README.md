@@ -1,25 +1,25 @@
-# ISRC Anonymizer
+# Data Anonymizer
 
-Detects and encrypts ISRC columns in csv or excel files and generates the resulting table in csv
+Anonymizes a set of columns in a csv or excel file and generates the resulting table as a csv file. 
 
 ## Installation
 
 ### Prerequisites
 
-Make [Python >= 3.8](https://www.python.org/) installed.
+Make sure [Python >= 3.8](https://www.python.org/) is installed.
 
 ### Steps
 
 1. Clone the repository:
 
 ```
-git clone https://github.com/wm-france/isrc-anonymizer
+git clone https://github.com/wm-france/data-anonymizer
 ```
 
 2. Navigate to its root:
 
 ```
-cd isrc-anonymizer
+cd data-anonymizer
 ```
 
 3. Create a new Python virtual environment:
@@ -41,4 +41,5 @@ pip install -r requirements.txt
 ```
 
 ### How to use:
-* Run `isrc_anonymizer.py`
+* Run `data_anonymizer.py`
+
