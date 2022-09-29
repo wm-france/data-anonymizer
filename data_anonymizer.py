@@ -4,23 +4,6 @@ from os.path import exists
 
 pd.options.mode.chained_assignment = None
 
-# Input path
-table_path = input("Input full file path and press Enter: \n> ")
-# Retrieve folder path to place resulting file in same folder
-folder_path = table_path.rpartition("/")[0]
-# Load data from csv or excel to dataframe whether
-if exists(table_path):
-    if table_path.split(".")[1] == "xls" or table_path.split(".")[1] == "xlsx":
-        raw_table_to_encrypt = pd.read_excel(table_path, header=0)
-    elif table_path.split(".")[1] == "csv":
-        raw_table_to_encrypt = pd.read_csv(table_path)
-    else:
-        raise ValueError(
-            "File type incorrect. File needs to be of type csv, xls or xlsx."
-        )
-else:
-    raise ValueError("File does not exist.")
-
 
 # Find the headers line in dataframe and renames the columns accordingly
 def clean_data(df_subject):
@@ -46,27 +29,23 @@ def clean_data(df_subject):
 # and the first row where an ISRC was located in those columns
 
 
-def encrypt_value(value, encrypted_value_library, encryption):
-    # If we have not already encrypted this ISRC
-    if value not in encrypted_value_library:
-        encrypted_value = encryption.encrypt(
-            bytes(value, encoding="utf-8")
-        ).decode("utf-8")
-        # If the encrypted value is already used for another ISRC
-        while encrypted_value in encrypted_value_library.values():
-            # generate new encrypted value
-            encrypted_value = encryption.encrypt(
-                bytes(value, encoding="utf-8")
-            ).decode("utf-8")
-        # Add to library
-        encrypted_value_library[value] = encrypted_value
-        return encrypted_value
-    else:
-        return encrypted_value_library[value]
+def encrypt_series(s: pd.Series, encryption: Fernet) -> pd.Series:
+    """Return encrypted version of Pandas Series."""
+    # Convert to bytes because that's how Fernet works
+    s = s.astype(str).str.encode("utf8")
+
+    # Unique value -> encrypted value mapping Series
+    map = pd.Series(b"", index=s.drop_duplicates())
+
+    # Generate new encrypted keys until we have no duplicates
+    while (duplicated := map.duplicated(keep=False)).any():
+        map[duplicated] = map[duplicated].index.map(encryption.encrypt)
+
+    # Applying mapping to input Series
+    return s.map(map).str.decode("utf8")
 
 
 def encrypt_df(df_subject, encryption):
-    encrypted_library = {}
     column_names_to_encrypt = []
     # Ask user which columns to encrypt
     col_names = df_subject.columns
@@ -88,34 +67,56 @@ def encrypt_df(df_subject, encryption):
     for entry in entries:
         if entry.isnumeric():
             col_index = int(entry)
-            if col_index <= number_of_columns and col_index > 0:
+            if 0 <= col_index <= number_of_columns:
                 column_names_to_encrypt.append(col_names[int(entry)])
             else:
                 raise ValueError("Entry out of range.")
         else:
             raise ValueError("Invalid entry.")
+
     # Replace values with corresponding encrypted values in chosen columns
     for col_name in column_names_to_encrypt:
-        df_subject.loc[:, col_name] = df_subject.loc[:, col_name].map(
-            lambda x: encrypt_value(str(x), encrypted_library, encryption)
-        )
+        print(f"Encrypting {col_name}")
+        df_subject[col_name] = encrypt_series(df_subject[col_name], encryption)
+
     return df_subject
 
 
-###
-# Apply encryption on imported table
-def generate_encryption():
+def generate_encryption() -> Fernet:
     key = Fernet.generate_key()
     f = Fernet(key)
     return f
 
 
-encrypted_df = encrypt_df(
-    clean_data(raw_table_to_encrypt), generate_encryption()
-)
+if __name__ == "__main__":
+    # Input path
+    table_path = input("Input full file path and press Enter: \n> ")
+    # Retrieve folder path to place resulting file in same folder
+    folder_path = table_path.rpartition("/")[0]
+    # Load data from csv or excel to dataframe whether
+    if exists(table_path):
+        if (
+            table_path.split(".")[1] == "xls"
+            or table_path.split(".")[1] == "xlsx"
+        ):
+            raw_table_to_encrypt = pd.read_excel(table_path, header=0)
+        elif table_path.split(".")[1] == "csv":
+            raw_table_to_encrypt = pd.read_csv(table_path)
+        else:
+            raise ValueError(
+                "File type incorrect. "
+                "File needs to be of type csv, xls or xlsx."
+            )
+    else:
+        raise ValueError("File does not exist.")
 
-# Store resulting encrypted table in csv file
-encrypted_table_path = table_path.split(".")[0] + "_encrypted.csv"
-encrypted_df.to_csv(
-    path_or_buf=encrypted_table_path, index=False, encoding="utf-8"
-)
+    encrypted_df = encrypt_df(
+        clean_data(raw_table_to_encrypt), generate_encryption()
+    )
+
+    # Store resulting encrypted table in csv file
+    encrypted_table_path = table_path.split(".")[0] + "_encrypted.csv"
+    print(f"Saving result file to {encrypted_table_path}")
+    encrypted_df.to_csv(
+        path_or_buf=encrypted_table_path, index=False, encoding="utf-8"
+    )
