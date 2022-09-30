@@ -25,10 +25,6 @@ def clean_data(df_subject):
     return clean_df_subject
 
 
-# Returns list of columns that contain ISRCs,
-# and the first row where an ISRC was located in those columns
-
-
 def encrypt_series(s: pd.Series, encryption: Fernet) -> pd.Series:
     """Return encrypted version of Pandas Series."""
     # Convert to bytes because that's how Fernet works
